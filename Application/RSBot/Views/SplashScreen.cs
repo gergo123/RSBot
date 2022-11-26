@@ -7,6 +7,7 @@ using SDUI.Helpers;
 using System;
 using System.Drawing;
 using System.IO;
+using System.Reflection;
 using System.Windows.Forms;
 
 namespace RSBot.Views
@@ -24,9 +25,7 @@ namespace RSBot.Views
             CheckForIllegalCrossThreadCalls = false;
             _mainForm = new Main();
 
-            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-            labelVersion.Text = $"v{version.Major}.{version.Minor}";
-
+            labelVersion.Text = Program.AssemblyVersion;
             referenceDataLoader.RunWorkerCompleted += ReferenceDataLoaderCompleted;
         }
 
@@ -178,6 +177,8 @@ namespace RSBot.Views
             //---- Load Botbases ----
             if (!Kernel.BotbaseManager.LoadAssemblies())
                 MessageBox.Show(@"Failed to load botbases. Process canceled!", @"Initialize Application - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+            CommandManager.Initialize();
 
             InitializeMap();
         }

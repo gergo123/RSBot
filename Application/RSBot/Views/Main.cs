@@ -32,7 +32,7 @@ namespace RSBot.Views
         /// Bot player name [_cached]
         /// </summary>
         private string _playerName;
-
+        
         #endregion Members
 
         #region Constructor
@@ -56,7 +56,7 @@ namespace RSBot.Views
         /// Called when user preference changing
         /// </summary>
         /// <param name="sender">The sender</param>
-        /// <param name="e">The event arags</param>
+        /// <param name="e">The event args</param>
         private void SystemEvents_UserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
         {
             if (e?.Category != UserPreferenceCategory.Color)
@@ -100,6 +100,7 @@ namespace RSBot.Views
         private void RegisterEvents()
         {
             EventManager.SubscribeEvent("OnChangeStatusText", new Action<string>(OnChangeStatusText));
+            EventManager.SubscribeEvent("OnShowBotWindow", OnShowBotWindow);
             EventManager.SubscribeEvent("OnLoadPlugins", OnLoadPlugins);
             EventManager.SubscribeEvent("OnLoadDivisionInfo", new Action<DivisionInfo>(OnLoadDivisionInfo));
             EventManager.SubscribeEvent("OnLoadBotbases", OnLoadBotbases);
@@ -107,6 +108,29 @@ namespace RSBot.Views
             EventManager.SubscribeEvent("OnStartBot", OnStartBot);
             EventManager.SubscribeEvent("OnStopBot", OnStopBot);
             EventManager.SubscribeEvent("OnAgentServerDisconnected", OnAgentServerDisconnected);
+            EventManager.SubscribeEvent("OnShowScriptRecorder", new Action<int, bool>(OnShowScriptRecorder));
+        }
+
+        private void OnShowScriptRecorder(int ownerId, bool startRecording)
+        {
+            var recorder = new ScriptRecorder(ownerId, startRecording);
+            recorder.Show();
+        }
+
+        /// <summary>
+        /// Forces to show the bot window
+        /// </summary>
+        private void OnShowBotWindow()
+        {
+            if (WindowState == FormWindowState.Minimized)
+                WindowState = FormWindowState.Normal;
+
+            TopMost = true;
+            
+            BringToFront();
+            Activate();
+
+            TopMost = false;
         }
 
         /// <summary>
@@ -118,38 +142,34 @@ namespace RSBot.Views
             if (Kernel.Bot.Running)
                 return;
 
-            var botbase = Kernel.BotbaseManager.Bots.FirstOrDefault(bot => bot.Value.Name == name);
-
-            if (botbase.Value == null)
+            var oldBotbaseName = Kernel.Bot?.Botbase?.Name;
+            var newBotbase = Kernel.BotbaseManager.Bots.FirstOrDefault(bot => bot.Value.Name == name);
+            if (newBotbase.Value == null)
             {
                 Log.Error($"Botbase [{name}] could not be found!");
+
                 return;
             }
 
-            var selectedBotbase = botbase.Value;
-
-            selectedBotbase.Translate();
-
             _ = tabMain.Handle; //Generate the handle for the tab control
 
-            if (Kernel.Bot?.Botbase != null)
-                tabMain.TabPages.RemoveByKey(Kernel.Bot.Botbase.Name);
+            newBotbase.Value.Translate();
 
             //Add the tab to the tabcontrol
-            var tabPage = new TabPage(LanguageManager.GetLangBySpecificKey(selectedBotbase.Name, "TabText", selectedBotbase.TabText))
+            var tabPage = new TabPage(LanguageManager.GetLangBySpecificKey(newBotbase.Value.Name, "TabText", newBotbase.Value.TabText))
             {
-                Name = selectedBotbase.Name,
-                Enabled = Game.Player != null
+                Name = newBotbase.Value.Name,
+                Enabled = Game.Ready,
+                BackColor = Color.FromArgb(200, BackColor),
+                ForeColor = ForeColor
             };
 
-            tabPage.BackColor = Color.FromArgb(200, BackColor);
-            tabPage.ForeColor = ForeColor;
-            tabPage.Controls.Add(selectedBotbase.View);
+            tabPage.Controls.Add(newBotbase.Value.View);
 
             tabMain.TabPages.Insert(1, tabPage);
 
-            Kernel.Bot?.SetBotbase(selectedBotbase);
-            GlobalConfig.Set("RSBot.BotName", selectedBotbase.Name);
+            Kernel.Bot?.SetBotbase(newBotbase.Value);
+            GlobalConfig.Set("RSBot.BotName", newBotbase.Value.Name);
 
             if (Game.Player == null)
             {
@@ -165,9 +185,14 @@ namespace RSBot.Views
                 //control.BringToFront();
                 info.BringToFront();
             }
-
+            else
+                EventManager.FireEvent("OnLoadCharacter");
+            
             foreach (ToolStripMenuItem item in botsToolStripMenuItem.DropDown.Items)
-                item.Checked = selectedBotbase.Name == item.Name;
+                item.Checked = newBotbase.Value.Name == item.Name;
+
+            if (oldBotbaseName != null && tabMain.TabPages.ContainsKey(oldBotbaseName))
+                tabMain.TabPages[oldBotbaseName].Dispose();
         }
 
         /// <summary>
@@ -299,14 +324,15 @@ namespace RSBot.Views
                 MaximizeBox = false,
                 FormBorderStyle = FormBorderStyle.FixedDialog,
                 Icon = Icon,
-                StartPosition = FormStartPosition.CenterScreen
+                StartPosition = FormStartPosition.CenterParent
             };
 
             var content = plugin.View;
-            plugin.Translate();
             content.Dock = DockStyle.Fill;
 
-            window.Size = new Size(content.Size.Width + 15, content.Size.Height + 15);
+            plugin.Translate();
+
+            window.Size = new Size(content.Size.Width + 16, content.Size.Height + 32);
             window.Controls.Add(content);
             window.Show();
         }
@@ -413,7 +439,10 @@ namespace RSBot.Views
                 plugin.Value.Translate();
 
                 var tabpage = tabMain.TabPages[plugin.Key];
-                tabpage.Text = LanguageManager.GetLangBySpecificKey(plugin.Key, "DisplayName");
+                if (tabpage == null)
+                    continue;
+
+                tabpage.Text = LanguageManager.GetLangBySpecificKey(plugin.Key, "DisplayName", tabpage.Text);
             }
 
             foreach (var botbase in Kernel.BotbaseManager.Bots)
@@ -424,7 +453,7 @@ namespace RSBot.Views
                     continue;
 
                 var tabpage = tabMain.TabPages[botbase.Key];
-                tabpage.Text = LanguageManager.GetLangBySpecificKey(botbase.Key, "DisplayName");
+                tabpage.Text = LanguageManager.GetLangBySpecificKey(botbase.Key, "DisplayName", tabpage.Text);
             }
 
             LanguageManager.Translate(this, Kernel.Language);
