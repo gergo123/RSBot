@@ -71,6 +71,7 @@ namespace RSBot.Alchemy.Views
         private readonly EnhanceSettingsView _enhanceSettingsView;
         private readonly MagicOptionsSettingsView _magicOptionsSettingsView;
         private readonly AttributesSettingsView _attributeSettingsView;
+        private int selectedIndex;
 
         #endregion Members
 
@@ -93,6 +94,7 @@ namespace RSBot.Alchemy.Views
             EventManager.SubscribeEvent("OnLoadCharacter", () => { Invoke(ReloadItemList); });
 
             EventManager.SubscribeEvent("OnAlchemy", new Action<AlchemyType>(OnAlchemy));
+            EventManager.SubscribeEvent("OnStopBot", OnStopBot);
 
             _enhanceSettingsView = new EnhanceSettingsView { Visible = true, Dock = DockStyle.Fill };
             _magicOptionsSettingsView = new MagicOptionsSettingsView { Visible = false, Dock = DockStyle.Fill };
@@ -107,8 +109,68 @@ namespace RSBot.Alchemy.Views
 
         #region Methods
 
+        public void OnStopBot()
+        {
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                var rnd = new Random();
+                System.Threading.Thread.Sleep(8650);
+                if (!Kernel.Bot.Running)
+                {
+                    //System.Media.SystemSounds.Beep.Play();
+                }
+            });
+            var cntinue = chkMassAlchemy.Checked;
+            if (cntinue)
+            {
+                for (int i = 0; i < comboItem.Items.Count; i++)
+                {
+                    var itm = comboItem.Items[i] as InventoryItemComboboxItem;
+                    if (comboItem.SelectedItem is InventoryItemComboboxItem selectedInveItem)
+                    {
+                        if (itm.InventoryItem.Slot == selectedInveItem.InventoryItem.Slot && 
+                            comboItem.Items.Count - 1 >= i + 1)
+                        {
+                            var j = i;
+                            //System.Threading.Thread
+                            System.Threading.Tasks.Task.Run(() =>
+                            {
+                                comboItem.SelectedItem = comboItem.Items[j + 1];
+                                selectedIndex = j;
+                                var rnd = new Random();
+                                System.Threading.Thread.Sleep(2650 + rnd.Next(1200, 2900));
+                                if (chkMassAlchemy.Checked)
+                                {
+                                    Kernel.Bot.Start();
+                                }
+                            });
+                            break;
+                        }
+                    }
+                }
+
+                // no item selected, perhaps a poooff happened
+                if (comboItem.SelectedItem == null && comboItem.Items.Count > 0)
+                {
+                    System.Threading.Tasks.Task.Run(() =>
+                    {
+                        // continue where we left off
+                        comboItem.SelectedItem = comboItem.Items[selectedIndex];
+                        var rnd = new Random();
+                        System.Threading.Thread.Sleep(2650 + rnd.Next(1200, 2900));
+                        if (chkMassAlchemy.Checked)
+                        {
+                            Kernel.Bot.Start();
+                        }
+                    });
+                }
+            }
+        }
+
         private void OnAlchemy(AlchemyType type)
         {
+            // Steady never refreshes than
+            //if(!chkMassAlchemy.Checked)
             Invoke(ReloadItemList);
         }
 
@@ -121,7 +183,8 @@ namespace RSBot.Alchemy.Views
 
             comboItem.Items.Clear();
 
-            var items = Game.Player.Inventory.Where(i => i.Record.IsEquip && !i.Record.IsAvatar && !i.Record.IsJobOutfit).ToList();
+            var items = Game.Player.Inventory.Where(i => i.Record.IsEquip && !i.Record.IsAvatar && !i.Record.IsJobOutfit)
+                .OrderBy(x => x.Slot).ToList();
 
             try
             {
@@ -246,6 +309,7 @@ namespace RSBot.Alchemy.Views
             lblDegree.Text = SelectedItem.Record.Degree.ToString();
             lblOptLevel.Text = $"+{SelectedItem.OptLevel}";
             ItemChanged?.Invoke(SelectedItem);
+            selectedIndex = comboItem.SelectedIndex;
 
             IsRefreshing = false;
         }

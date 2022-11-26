@@ -62,6 +62,7 @@ namespace RSBot.Alchemy.Views
             this.radioAttributes = new SDUI.Controls.Radio();
             this.radioMagicOptions = new SDUI.Controls.Radio();
             this.radioEnhance = new SDUI.Controls.Radio();
+            this.chkMassAlchemy = new SDUI.Controls.CheckBox();
             this.groupItem.SuspendLayout();
             this.tabControlItemInfo.SuspendLayout();
             this.tabMagicOptions.SuspendLayout();
@@ -73,6 +74,7 @@ namespace RSBot.Alchemy.Views
             // groupItem
             // 
             this.groupItem.BackColor = System.Drawing.Color.Transparent;
+            this.groupItem.Controls.Add(this.chkMassAlchemy);
             this.groupItem.Controls.Add(this.lblOptLevel);
             this.groupItem.Controls.Add(this.tabControlItemInfo);
             this.groupItem.Controls.Add(this.comboItem);
@@ -85,7 +87,7 @@ namespace RSBot.Alchemy.Views
             this.groupItem.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.groupItem.Name = "groupItem";
             this.groupItem.Padding = new System.Windows.Forms.Padding(4, 12, 4, 3);
-            this.groupItem.Radius = 2;
+            this.groupItem.Radius = 10;
             this.groupItem.ShadowDepth = 4;
             this.groupItem.Size = new System.Drawing.Size(322, 331);
             this.groupItem.TabIndex = 0;
@@ -347,6 +349,18 @@ namespace RSBot.Alchemy.Views
             this.radioEnhance.Text = "Enhance (+)";
             this.radioEnhance.CheckedChanged += new System.EventHandler(this.radioEngine_CheckedChanged);
             // 
+            // chkMassAlchemy
+            // 
+            this.chkMassAlchemy.AutoSize = true;
+            this.chkMassAlchemy.BackColor = System.Drawing.Color.Transparent;
+            this.chkMassAlchemy.Location = new System.Drawing.Point(21, 125);
+            this.chkMassAlchemy.Name = "chkMassAlchemy";
+            this.chkMassAlchemy.ShadowDepth = 1;
+            this.chkMassAlchemy.Size = new System.Drawing.Size(243, 15);
+            this.chkMassAlchemy.TabIndex = 8;
+            this.chkMassAlchemy.Text = "Go through every item with same settings";
+            this.chkMassAlchemy.UseVisualStyleBackColor = false;
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -395,5 +409,6 @@ namespace RSBot.Alchemy.Views
         private RadioButton radioMagicOptions;
         private Panel panelSettings;
         private RadioButton radioAttributes;
+        private SDUI.Controls.CheckBox chkMassAlchemy;
     }
 }

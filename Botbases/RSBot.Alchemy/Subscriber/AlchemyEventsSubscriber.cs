@@ -22,10 +22,10 @@ namespace RSBot.Alchemy.Subscriber
             if (!Bootstrap.IsActive)
                 return;
 
-            Globals.Botbase.EnhanceBundleConfig = null;
-            Globals.Botbase.MagicBundleConfig = null;
+            //Globals.Botbase.EnhanceBundleConfig = null;
+            //Globals.Botbase.MagicBundleConfig = null;
 
-            Globals.View.SelectedItem = null;
+            //Globals.View.SelectedItem = null;
             Globals.View.AddLog(oldItem.Record.GetRealName(), Game.ReferenceManager.GetTranslation("UIIT_MSG_REINFORCERR_BREAKDOWN"));
             Log.Warn("[Alchemy] The item has been destroyed, stopping now...");
 

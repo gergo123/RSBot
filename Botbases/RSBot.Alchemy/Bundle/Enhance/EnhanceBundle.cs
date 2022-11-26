@@ -8,6 +8,7 @@ using RSBot.Core.Event;
 using RSBot.Core.Objects;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -138,6 +139,16 @@ namespace RSBot.Alchemy.Bundle.Enhance
                 return;
             }
 
+            if (config.Item.OptLevel <= 4 && false)
+            {
+                Log.Warn($"[Alchemy] {config.Item.OptLevel}, skipping to next");
+
+                Globals.View.AddLog(config.Item.Record.GetRealName(), $"The item's option level is {config.Item.OptLevel}/{config.MaxOptLevel}");
+                Kernel.Bot.Stop();
+
+                return;
+            }
+
             //Use steady stone?
             if (_config.UseSteadyStones && _config.Item.OptLevel >= 5)
             {
@@ -157,7 +168,7 @@ namespace RSBot.Alchemy.Bundle.Enhance
             }
 
             //Use lucky stone?
-            if (_config.UseLuckyStones && _config.Item.OptLevel >= 5)
+            if (_config.UseLuckyStones && _config.Item.OptLevel >= 7)
             {
                 var luckyStone = AlchemyItemHelper.GetLuckyStone(config.Item);
 
